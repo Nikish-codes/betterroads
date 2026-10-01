@@ -14,6 +14,7 @@ interface WhoIsResponsibleButtonProps {
 export function WhoIsResponsibleButton({ onTakePhoto }: WhoIsResponsibleButtonProps) {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [photoScreenVisible, setPhotoScreenVisible] = useState(false);
   const [authorities, setAuthorities] = useState<RoadAuthority[]>([]);
   const [matchType, setMatchType] = useState<'area' | 'city' | 'state' | 'national'>();
   const [location, setLocation] = useState<{ area: string | null; city: string | null; state: string | null }>();
@@ -104,8 +105,40 @@ export function WhoIsResponsibleButton({ onTakePhoto }: WhoIsResponsibleButtonPr
 
   const handleTakePhoto = () => {
     setModalVisible(false);
-    if (onTakePhoto && authorities.length > 0 && location) {
-      onTakePhoto(authorities, location);
+    setPhotoScreenVisible(true);
+  };
+
+  const handlePhotoTaken = async (photoUri: string) => {
+    try {
+      setPhotoScreenVisible(false);
+
+      if (!authorities.length || !location) return;
+
+      // Compress photo
+      const compressedUri = await compressPhoto(photoUri);
+
+      // Share photo with authority info
+      const locationText = [location.area, location.city, location.state].filter(Boolean).join(', ');
+      const shared = await sharePhoto({
+        photoUri: compressedUri,
+        authority: authorities[0],
+        location: locationText,
+      });
+
+      if (shared) {
+        Alert.alert(
+          'Photo Shared!',
+          'Thank you for reporting this bad road condition.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Failed to process photo:', error);
+      Alert.alert(
+        'Error',
+        'Failed to process photo. Please try again.',
+        [{ text: 'OK' }]
+      );
     }
   };
 
@@ -131,14 +164,24 @@ export function WhoIsResponsibleButton({ onTakePhoto }: WhoIsResponsibleButtonPr
       </Pressable>
 
       {authorities.length > 0 && (
-        <AuthorityInfoModal
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          authorities={authorities}
-          matchType={matchType}
-          location={location}
-          onTakePhoto={handleTakePhoto}
-        />
+        <>
+          <AuthorityInfoModal
+            visible={modalVisible}
+            onClose={() => setModalVisible(false)}
+            authorities={authorities}
+            matchType={matchType}
+            location={location}
+            onTakePhoto={handleTakePhoto}
+          />
+
+          <PhotoCaptureScreen
+            visible={photoScreenVisible}
+            onClose={() => setPhotoScreenVisible(false)}
+            authorities={authorities}
+            location={location!}
+            onPhotoTaken={handlePhotoTaken}
+          />
+        </>
       )}
     </>
   );
