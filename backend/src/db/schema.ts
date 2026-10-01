@@ -10,6 +10,7 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  varchar,
 } from 'drizzle-orm/pg-core';
 
 export const users = pgTable(
@@ -640,3 +641,46 @@ export const feedbacks = pgTable('feedbacks', {
   location: text('location'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * road_authorities — stores information about road maintenance authorities
+ * for the "Who's Responsible?" feature
+ */
+export const roadAuthorities = pgTable(
+  'road_authorities',
+  {
+    id: serial('id').primaryKey(),
+    authorityId: text('authority_id').notNull().unique(),
+    name: text('name').notNull(),
+    type: text('type').notNull(), // 'MUNICIPAL', 'STATE_PWD', 'NATIONAL', 'RURAL', 'OTHER'
+
+    // Jurisdiction
+    state: text('state').notNull(),
+    city: text('city'),
+    areas: text('areas').array(),
+    jurisdictionGeojson: jsonb('jurisdiction_geojson'),
+
+    // Contact information
+    contactName: text('contact_name'),
+    contactPhone: text('contact_phone'),
+    contactEmail: text('contact_email'),
+    contactWebsite: text('contact_website'),
+
+    // Social media handles
+    twitterHandle: text('twitter_handle'),
+    instagramHandle: text('instagram_handle'),
+    facebookHandle: text('facebook_handle'),
+    whatsappNumber: text('whatsapp_number'),
+
+    // Metadata
+    responsibleFor: text('responsible_for').array(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('road_authorities_authority_id_idx').on(t.authorityId),
+    index('road_authorities_state_idx').on(t.state),
+    index('road_authorities_city_idx').on(t.city),
+    index('road_authorities_state_city_idx').on(t.state, t.city),
+  ]
+);

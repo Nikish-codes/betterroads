@@ -11,6 +11,7 @@ import { publicRoadsRouter } from './routes/publicRoads.js';
 import { adminRouter } from './routes/admin.js';
 import { mobileAuthRouter } from './routes/mobileAuth.js';
 import { collectionRouter } from './routes/collection.js';
+import { authorityLookupRouter } from './routes/authorityLookup.js';
 import { bootstrapAdministrator } from './lib/auth.js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { db } from './db/index.js';
@@ -60,6 +61,7 @@ app.route('/api/mobile', mobileAuthRouter);
 
 /** Public map + timeline read API */
 app.route('/api/public', publicRoadsRouter);
+app.route('/api/public', authorityLookupRouter);
 
 /** Internal admin API (bearer-token protected, see routes/admin.ts) */
 app.route('/api/admin', adminRouter);
